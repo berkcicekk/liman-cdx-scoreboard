@@ -4,7 +4,8 @@ Cenk; Liman MYS üzerinde çalışan, servis sürekliliği, White Team puanları
 
 **Uyumluluk:** Paket, Liman sürüm kodu **1093** ve sonrası için tanımlıdır.
 
-![Cenk Scoreboard dark-theme dashboard](docs/images/cenk-scoreboard-dark.png)
+![Cenk Scoreboard dark-theme dashboard](<img width="1895" height="949" alt="image" src="https://github.com/user-attachments/assets/1e8b050a-f291-4d83-8042-097d3e9064d8" />
+)
 
 ## Çalışma mantığı
 
