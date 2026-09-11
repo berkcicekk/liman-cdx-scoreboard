@@ -1,0 +1,11 @@
+/dist/
+/node_modules/
+/tests/.runtime/
+/config/local.php
+.env
+.env.local
+*.log
+.lockedshields-local-access.txt
+dist/*.zip
+*.pid
+/keys/

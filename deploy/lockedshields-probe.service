@@ -1,0 +1,27 @@
+[Unit]
+Description=Liman Cenk continuous probe worker
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=liman
+Group=liman
+WorkingDirectory=/liman/server/storage/extensions/cenk
+Environment=LS_CONFIG_PATH=/etc/liman/locked-shields.php
+Environment=LS_WORKER_LOCK=/var/lib/lockedshields-probe/worker.lock
+ExecStart=/usr/bin/php /liman/server/storage/extensions/cenk/scripts/probe_worker.php
+Restart=always
+RestartSec=10
+TimeoutStopSec=15
+KillMode=control-group
+StateDirectory=lockedshields-probe
+StateDirectoryMode=0750
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/lockedshields-probe
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

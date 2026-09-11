@@ -1,0 +1,29 @@
+name: locked-shields-tests
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ls_test
+      POSTGRES_USER: ls_test
+      POSTGRES_PASSWORD: ${TEST_POSTGRES_PASSWORD:?Set TEST_POSTGRES_PASSWORD before running integration tests.}
+    tmpfs: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ls_test -d ls_test"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+  php:
+    build:
+      context: ..
+      dockerfile: tests/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    working_dir: /app
+    volumes:
+      - ..:/app:ro
+    environment:
+      LS_CONFIG_PATH: /app/tests/config.php
+      TEST_POSTGRES_PASSWORD: ${TEST_POSTGRES_PASSWORD:?Set TEST_POSTGRES_PASSWORD before running integration tests.}
+      TEST_RUNTIME_DB_PASSWORD: ${TEST_RUNTIME_DB_PASSWORD:?Set TEST_RUNTIME_DB_PASSWORD before running integration tests.}
+    command: ["php", "tests/run.php"]

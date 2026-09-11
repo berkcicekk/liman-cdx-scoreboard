@@ -1,0 +1,89 @@
+name: lockedshields-local
+
+services:
+  liman:
+    # Official image used by https://github.com/limanmys/core/blob/master/docker-compose.yml
+    image: ${LIMAN_IMAGE:-aciklab/liman@sha256:c2c49455681ad9c88bceea544672aec416ddac2ad4caeb29b8f314b1c73a776d}
+    entrypoint: ["bash", "/opt/lockedshields-local/entrypoint.sh"]
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: liman
+      DB_USERNAME: liman
+      DB_PASS: ${LIMAN_DB_PASSWORD:?Run ./local_run.sh to create local secrets.}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASS: ${LIMAN_REDIS_PASSWORD:?Run ./local_run.sh to create local secrets.}
+      LS_SCOREBOARD_DB_PASSWORD: ${LS_SCOREBOARD_DB_PASSWORD:?Run ./local_run.sh to create local secrets.}
+      NGINX_PORT: "443"
+      APP_URL: http://localhost:8000
+      LS_LOCAL_HARNESS: "1"
+    ports:
+      - "127.0.0.1:8000:80"
+    volumes:
+      - liman-data:/liman
+      - .:/liman/server/storage/extensions/lockedshields
+      # Core's public-file realpath check requires a real mount, not a symlink.
+      - .:/liman/extensions/lockedshields
+      # Liman derives the renderer path from db.json.name (Cenk -> /liman/extensions/cenk).
+      - .:/liman/extensions/cenk
+      - ./local:/opt/lockedshields-local:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mock-target:
+        condition: service_healthy
+      webssh:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "5", "http://127.0.0.1/auth/login"]
+      interval: 5s
+      timeout: 6s
+      retries: 60
+      start_period: 30s
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: liman
+      POSTGRES_USER: liman
+      POSTGRES_PASSWORD: ${LIMAN_DB_PASSWORD:?Run ./local_run.sh to create local secrets.}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "liman", "-d", "liman"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${LIMAN_REDIS_PASSWORD:?Run ./local_run.sh to create local secrets.}"]
+    environment:
+      REDISCLI_AUTH: ${LIMAN_REDIS_PASSWORD:?Run ./local_run.sh to create local secrets.}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # The official Nginx config resolves this upstream on startup.
+  webssh:
+    image: limanmys/webssh:latest
+
+  mock-target:
+    build: ./local/mock-target
+    expose:
+      - "80"
+      - "22"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1/health | grep -q OK && nc -z 127.0.0.1 22"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  postgres-data:
+  liman-data:

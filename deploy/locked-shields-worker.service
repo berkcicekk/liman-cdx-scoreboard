@@ -1,0 +1,25 @@
+[Unit]
+Description=Liman Cenk probe worker
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Replace with the Linux account whose name is the installed Liman extension UUID.
+User=REPLACE_WITH_EXTENSION_UUID
+Group=REPLACE_WITH_EXTENSION_UUID
+WorkingDirectory=/liman/extensions/cenk
+Environment=LS_CONFIG_PATH=/etc/liman/locked-shields.php
+ExecStart=/usr/bin/php /liman/extensions/cenk/bin/worker.php
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+KillMode=control-group
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/tmp
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,27 @@
+{
+  "name": "Cenk",
+  "display_name": {"tr": "Cenk Skor Tahtası", "en": "Cenk Scoreboard"},
+  "publisher": "Cenk Development Team",
+  "version": "1.0.0",
+  "version_code": 100,
+  "language": "php",
+  "status": 0,
+  "service": "",
+  "icon": "fas fa-shield-alt",
+  "require_key": false,
+  "license_type": "MIT",
+  "ldap_support": false,
+  "verification": null,
+  "dependencies": "php-pgsql php-curl php-ldap php-xml iputils-ping",
+  "sslPorts": null,
+  "database": [],
+  "widgets": [],
+  "views": [{"name": "index", "scripts": ""}],
+  "functions": [
+    {"name": "index", "description": "Skor tahtasını görüntüle"},
+    {"name": "ls_dashboard", "description": "Skor ve servis verilerini oku"},
+    {"name": "ls_create_team", "description": "White Team: takım oluştur"},
+    {"name": "ls_create_service", "description": "White Team: servis oluştur"},
+    {"name": "ls_add_inject", "description": "White Team: görev veya ceza puanı ekle"}
+  ]
+}

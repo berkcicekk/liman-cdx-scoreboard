@@ -1,0 +1,9 @@
+{
+  "name": "liman-cenk-scoreboard",
+  "private": true,
+  "scripts": {
+    "check": "node --check public/js/scoreboard.js",
+    "test:ui": "playwright test --config tests/playwright.config.js"
+  },
+  "devDependencies": {"@playwright/test": "1.58.2"}
+}
