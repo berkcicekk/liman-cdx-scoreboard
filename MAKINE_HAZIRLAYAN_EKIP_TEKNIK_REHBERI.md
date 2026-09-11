@@ -148,6 +148,8 @@ Bu SQL'deki `command` değeri, yapılandırmadaki `vulnerability_checks[SUNUCU_U
 
 Her çalıştırma `ls_vulnerability_logs` tablosuna eklemeli olarak kaydedilir. Kayıt; denetim zamanı, patched sonucu, exit code, süre ve en fazla 1000 karakterlik maskelenmiş çıktıyı içerir. `password`, `token`, `secret`, `authorization` ve API anahtarı biçimindeki değerler saklanmadan önce maskelenir. Ham denetim çıktısına parola veya erişim anahtarı yazmayın.
 
+İsteğe bağlı bildirim için yapılandırmada sunucu UUID'si altında `notifications => ['webhooks'=>['https://...']]` tanımlayın. Cenk yalnızca zafiyet durumu değiştiğinde HTTPS POST gönderir; tekrarlayan polling sonuçları bildirim üretmez. Webhook URL'sine kullanıcı adı, parola veya token koymayın.
+
 ## Kabul kontrolleri
 
 Kurulumdan sonra aşağıdaki kontrollerin tamamı geçmelidir:

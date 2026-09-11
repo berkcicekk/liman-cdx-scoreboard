@@ -14,6 +14,8 @@ PHP Sandbox + Liman Blade + Liman `request()` altyapısı üzerinde çalışan t
 
 **Architecture / Mimari:** Browser → Liman UI and PHP Sandbox → Cenk Blade/Chart.js dashboard → PostgreSQL (`ls_*` tables). The background worker probes scoped services and runs only configured vulnerability-check commands; results, exit codes, durations and redacted evidence are retained in the security audit history. The score trend includes SLA, White Team adjustments, and historical security compliance. Service and security matrices poll every 10 seconds.
 
+**Alerts / Uyarılar:** An optional per-server HTTPS webhook is sent only when a vulnerability changes between `Vulnerable` and `Patched`. Webhook URLs must not contain credentials.
+
 ## Mimari ve Liman uyumu
 
 Kaynak incelemesinde doğrulanan entegrasyon noktaları:

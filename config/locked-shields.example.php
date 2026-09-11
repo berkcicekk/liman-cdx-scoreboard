@@ -22,6 +22,11 @@ return [
         //     'remote-remediation-check' => ['check_type'=>'REMOTE_EXPLOIT','argv'=>['/usr/local/libexec/check-remote-remediation'],'timeout_ms'=>3000],
         // ],
     ],
+    // HTTPS webhooks are sent only when a vulnerability changes status.
+    // Never place credentials in a webhook URL; use the provider's secret store.
+    'notifications' => [
+        // 'REPLACE_WITH_LIMAN_SERVER_UUID' => ['webhooks'=>['https://alerts.example.invalid/cenk']],
+    ],
     // Optional credentials, scoped to a Liman server. Only references go into PostgreSQL.
     // WINRM options: {"credential":"winrm-reader"}; LDAP: {"tls":true,"credential":"ldap-reader"}.
     'credentials' => [

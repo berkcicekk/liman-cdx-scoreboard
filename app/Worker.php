@@ -106,7 +106,8 @@ final class Worker
                 $result = is_array($definition) && ($definition['check_type'] ?? '') === $row['check_type']
                     ? $this->executeVulnerability($definition)
                     : ['is_patched'=>false,'exit_code'=>127,'duration_ms'=>0.0,'output'=>'Allowlist denetimi bulunamadı veya denetim türü uyuşmuyor.'];
-                $this->recordVulnerability($row, $result);
+                $event = $this->recordVulnerability($row, $result);
+                if ($event !== null) { Notifier::vulnerabilityTransition($this->config, $event); }
                 $count++;
             }
         }
@@ -142,16 +143,21 @@ final class Worker
         return ['is_patched'=>$exit === 0,'exit_code'=>$exit,'duration_ms'=>$duration,'output'=>$this->redactEvidence($output)];
     }
 
-    private function recordVulnerability(array $check, array $result): void
+    private function recordVulnerability(array $check, array $result): ?array
     {
         $this->pdo->beginTransaction();
         try {
-            $owned = Database::query($this->pdo, 'SELECT id FROM ls_vulnerabilities WHERE id=? AND lease_token=? AND lease_until>clock_timestamp() FOR UPDATE', [$check['id'],$check['lease_token']]);
+            $owned = Database::query($this->pdo, 'SELECT id,status FROM ls_vulnerabilities WHERE id=? AND lease_token=? AND lease_until>clock_timestamp() FOR UPDATE', [$check['id'],$check['lease_token']]);
+            $event = null;
             if ($owned) {
+                $status = $result['is_patched'] ? 'Patched' : 'Vulnerable';
+                $checkedAt = Database::query($this->pdo, 'SELECT clock_timestamp() AS at')[0]['at'];
                 Database::query($this->pdo, 'INSERT INTO ls_vulnerability_logs(vulnerability_id,is_patched,exit_code,duration_ms,output) VALUES (?,?,?,?,?)', [$check['id'],$result['is_patched'] ? 'true' : 'false',$result['exit_code'],round((float)$result['duration_ms'],3),$result['output']]);
-                Database::query($this->pdo, "UPDATE ls_vulnerabilities SET status=?,last_checked_at=clock_timestamp(),lease_token=NULL,lease_until=NULL WHERE id=?", [$result['is_patched'] ? 'Patched' : 'Vulnerable',$check['id']]);
+                Database::query($this->pdo, "UPDATE ls_vulnerabilities SET status=?,last_checked_at=?,lease_token=NULL,lease_until=NULL WHERE id=?", [$status,$checkedAt,$check['id']]);
+                if ($owned[0]['status'] !== $status) { $event = ['server_id'=>$check['server_id'],'team_id'=>(int)$check['team_id'],'name'=>$check['name'],'previous_status'=>$owned[0]['status'],'status'=>$status,'exit_code'=>$result['exit_code'],'duration_ms'=>$result['duration_ms'],'checked_at'=>$checkedAt]; }
             }
             $this->pdo->commit();
+            return $event;
         } catch (\Throwable $e) { $this->pdo->rollBack(); throw $e; }
     }
 
