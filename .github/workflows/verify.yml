@@ -1,0 +1,39 @@
+name: Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install JavaScript dependencies
+        run: npm ci
+      - name: Check dashboard JavaScript
+        run: npm run check
+      - name: Build extension package
+        shell: pwsh
+        run: ./scripts/build.ps1
+      - name: Run PostgreSQL and Liman integration tests
+        env:
+          TEST_POSTGRES_PASSWORD: ${{ github.run_id }}${{ github.run_attempt }}postgres
+          TEST_RUNTIME_DB_PASSWORD: ${{ github.run_id }}${{ github.run_attempt }}runtime
+        run: |
+          set +e
+          docker compose -f tests/compose.yaml up --build --abort-on-container-exit --exit-code-from php --attach php
+          result=$?
+          set -e
+          docker compose -f tests/compose.yaml down --remove-orphans
+          exit $result

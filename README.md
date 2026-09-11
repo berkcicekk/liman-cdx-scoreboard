@@ -16,6 +16,8 @@ PHP Sandbox + Liman Blade + Liman `request()` altyapısı üzerinde çalışan t
 
 **Alerts / Uyarılar:** An optional per-server HTTPS webhook is sent only when a vulnerability changes between `Vulnerable` and `Patched`. Webhook URLs must not contain credentials.
 
+**CI / CD:** GitHub Actions runs package creation, JavaScript syntax validation, and the PostgreSQL/Liman integration suite for every push and pull request to `main`.
+
 ## Mimari ve Liman uyumu
 
 Kaynak incelemesinde doğrulanan entegrasyon noktaları:
