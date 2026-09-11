@@ -2,6 +2,8 @@
 
 Cenk; Liman MYS üzerinde çalışan, servis sürekliliği, White Team puanları ve zafiyet uyumluluğunu tek ekranda toplayan bir siber tatbikat skor tahtasıdır. HTTP, HTTPS, SSH, DNS, LDAP, WINRM ve PING kontrollerini destekler.
 
+**Uyumluluk:** Paket, Liman sürüm kodu **1093** ve sonrası için tanımlıdır.
+
 ![Cenk Scoreboard dark-theme dashboard](docs/images/cenk-scoreboard-dark.png)
 
 ## Çalışma mantığı
@@ -19,7 +21,7 @@ flowchart LR
 1. Liman, `views/functions.php` üzerinden Cenk fonksiyonlarını çalıştırır. Dashboard isteği güvenilir `server()->id` bağlamını kullanır; tarayıcıdan gelen sunucu veya kullanıcı kimliği kabul edilmez.
 2. Dashboard, PostgreSQL içindeki `ls_*` tablolarından tutarlı bir snapshot okur. Blade arayüzü servis/güvenlik matrisini, puan tablosunu, trendi ve son denetim kayıtlarını gösterir.
 3. Ayrı CLI worker, izinli CIDR kapsamındaki servisleri ölçer. Her sonuç append-only `ls_service_logs` tablosuna yazılır.
-4. Worker, yalnızca yönetici yapılandırmasındaki allowlist anahtarıyla eşleşen zafiyet komutlarını doğrudan argv olarak çalıştırır; shell kullanmaz. Exit code `0`, `Patched`; diğer sonuçlar `Vulnerable` kabul edilir.
+4. Worker, yalnızca yönetici yapılandırmasındaki allowlist anahtarıyla eşleşen zafiyet komutlarını doğrudan argv olarak çalıştırır; shell kullanmaz. `SSH_AUDIT`, worker makinesindeki bir denetim wrapper’ını ifade eder; hedefe SSH ile bağlanması gerekiyorsa bu wrapper bağlantıyı kendisi yönetir. Exit code `0`, `Patched`; diğer sonuçlar `Vulnerable` kabul edilir.
 5. Zafiyet denetim zamanı, exit code, süre ve maskelenmiş çıktı `ls_vulnerability_logs` tablosuna eklenir. Durum değişirse isteğe bağlı HTTPS webhook gönderilir.
 
 ## Skor modeli
@@ -133,3 +135,7 @@ scripts/build.ps1       Paket üretimi ve içerik denetimi
 ## Lisans
 
 Bu proje [MIT License](LICENSE) ile lisanslanmıştır. Chart.js lisans bilgisi için [THIRD_PARTY.md](THIRD_PARTY.md) dosyasına bakın.
+
+## Destek
+
+Destek ve geri bildirim için: [cckberk@gmail.com](mailto:cckberk@gmail.com)

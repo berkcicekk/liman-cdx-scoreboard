@@ -14,7 +14,9 @@ return [
     ],
     'parallel_probes' => 8,
     // Database command values are allowlist keys. argv is executed directly,
-    // never through a shell. Exit code 0 means the finding is remediated.
+    // never through a shell. SSH_AUDIT denotes a local audit wrapper; if it
+    // must connect to a target over SSH, that wrapper owns the SSH transport.
+    // Exit code 0 means the finding is remediated.
     'vulnerability_interval_seconds' => 10,
     'vulnerability_checks' => [
         // 'REPLACE_WITH_LIMAN_SERVER_UUID' => [
