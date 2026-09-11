@@ -100,6 +100,10 @@ check(count($vulnerabilityLogs)===3 && $vulnerabilityLogs[0]['is_patched'] && !$
 check((int)$vulnerabilityLogs[0]['exit_code']===0 && (int)$vulnerabilityLogs[1]['exit_code']!==0 && (float)$vulnerabilityLogs[0]['duration_ms']>=0,'Vulnerability history records exit code and duration');
 check($vulnerabilityLogs[2]['output']==='token=[REDACTED]','Vulnerability history redacts command evidence');
 check(count($board->vulnerabilityLogs($scope))===3,'Dashboard exposes scoped vulnerability history');
+$currentTrend=$board->trend($scope,Database::query($pdo,'SELECT clock_timestamp() AS at')[0]['at']);
+$teamTrend=array_values(array_filter($currentTrend,fn($point)=>(int)$point['team_id']===(int)$team['id']));$lastTrend=end($teamTrend);
+near((float)$lastTrend['security_score'],10,'Patched vulnerability contributes to historical security score');
+near((float)$lastTrend['score'],(float)$lastTrend['sla_score']+(float)$lastTrend['inject_score']+(float)$lastTrend['security_score'],'Trend total includes security score');
 
 // Actual Liman helper contracts (can, user, server, request, respond) at entry points.
 $permissions=[];

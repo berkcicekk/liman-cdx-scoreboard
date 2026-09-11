@@ -72,12 +72,15 @@ CREATE TABLE IF NOT EXISTS ls_vulnerabilities (
     command VARCHAR(100) NOT NULL CHECK (command ~ '^[A-Za-z0-9._-]+$'),
     points NUMERIC(10,2) NOT NULL CHECK (points > 0 AND points <= 10000),
     status VARCHAR(10) NOT NULL DEFAULT 'Vulnerable' CHECK (status IN ('Patched','Vulnerable')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
     last_checked_at TIMESTAMPTZ,
     lease_token VARCHAR(64),
     lease_until TIMESTAMPTZ,
     FOREIGN KEY (team_id) REFERENCES ls_teams(id) ON DELETE CASCADE,
     UNIQUE (team_id, name)
 );
+
+ALTER TABLE ls_vulnerabilities ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp();
 
 CREATE TABLE IF NOT EXISTS ls_vulnerability_logs (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

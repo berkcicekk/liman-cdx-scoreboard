@@ -121,14 +121,21 @@ spans AS MATERIALIZED (
 ), sla AS (
  SELECT at,team_id,COALESCE(sum(weight*up/NULLIF(elapsed,0)),0) AS score
  FROM service_scores GROUP BY at,team_id
+), security AS (
+ SELECT p.at,v.team_id,COALESCE(sum(v.points) FILTER (WHERE latest.is_patched),0) AS score
+ FROM points p CROSS JOIN cfg JOIN ls_teams t ON t.server_id=cfg.scope
+ JOIN ls_vulnerabilities v ON v.team_id=t.id AND v.created_at<=p.at
+ LEFT JOIN LATERAL (SELECT is_patched FROM ls_vulnerability_logs WHERE vulnerability_id=v.id AND checked_at<=p.at ORDER BY checked_at DESC,id DESC LIMIT 1) latest ON true
+ GROUP BY p.at,v.team_id
 )
 SELECT p.at,t.id AS team_id,round(COALESCE(sla.score,0),2) AS sla_score,
- round(COALESCE(inj.score,0),2) AS inject_score,
- round(COALESCE(sla.score,0)+COALESCE(inj.score,0),2) AS score
+ round(COALESCE(inj.score,0),2) AS inject_score,round(COALESCE(security.score,0),2) AS security_score,
+ round(COALESCE(sla.score,0)+COALESCE(inj.score,0)+COALESCE(security.score,0),2) AS score
 FROM points p CROSS JOIN cfg JOIN ls_teams t ON t.server_id=cfg.scope AND t.created_at<=p.at
 LEFT JOIN sla ON sla.team_id=t.id AND sla.at=p.at
 LEFT JOIN LATERAL (SELECT sum(points) AS score FROM ls_injects
  WHERE team_id=t.id AND server_id=cfg.scope AND created_at<=p.at) inj ON true
+LEFT JOIN security ON security.team_id=t.id AND security.at=p.at
 ORDER BY p.at,t.id
 SQL;
         return Database::query($this->pdo, $sql, [$scope,$at]);

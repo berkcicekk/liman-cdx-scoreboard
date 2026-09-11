@@ -12,7 +12,7 @@ PHP Sandbox + Liman Blade + Liman `request()` altyapısı üzerinde çalışan t
 
 **EN:** For development, `./local_run.sh` starts Liman, PostgreSQL, Redis, and an HTTP/SSH target with Docker. On first run it creates random local credentials in the ignored `.env.local` file. Sign in at `http://localhost:8000` and open Cenk Scoreboard. For production, upload the ZIP to Liman, apply the migration to Liman's PostgreSQL database, and run the worker as a service.
 
-**Architecture / Mimari:** Browser → Liman UI and PHP Sandbox → Cenk Blade/Chart.js dashboard → PostgreSQL (`ls_*` tables). The background worker probes scoped services and runs only configured vulnerability-check commands; results, exit codes, durations and redacted evidence are retained in the security audit history. Service and security matrices poll every 10 seconds.
+**Architecture / Mimari:** Browser → Liman UI and PHP Sandbox → Cenk Blade/Chart.js dashboard → PostgreSQL (`ls_*` tables). The background worker probes scoped services and runs only configured vulnerability-check commands; results, exit codes, durations and redacted evidence are retained in the security audit history. The score trend includes SLA, White Team adjustments, and historical security compliance. Service and security matrices poll every 10 seconds.
 
 ## Mimari ve Liman uyumu
 
