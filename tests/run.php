@@ -91,6 +91,15 @@ check((new Worker($pdo,$config))->once()===0,'No duplicate run before interval')
 $stale=Database::query($pdo,'SELECT * FROM ls_services WHERE id=?',[$s['id']])[0];$stale['lease_token']='obsolete';
 (new Worker($pdo,$config))->record($stale,['is_up'=>true,'latency_ms'=>0,'detail'=>'obsolete']);
 check(count(Database::query($pdo,'SELECT id FROM ls_service_logs'))===2,'Obsolete lease cannot write result');
+$patchedVulnerability=Database::query($pdo,"INSERT INTO ls_vulnerabilities(team_id,name,check_type,command,points) VALUES (?,'Patched fixture','SSH_AUDIT','patched-fixture',10) RETURNING id",[$team['id']])[0];
+$openVulnerability=Database::query($pdo,"INSERT INTO ls_vulnerabilities(team_id,name,check_type,command,points) VALUES (?,'Open fixture','SSH_AUDIT','vulnerable-fixture',10) RETURNING id",[$team['id']])[0];
+Database::query($pdo,"INSERT INTO ls_vulnerabilities(team_id,name,check_type,command,points) VALUES (?,'Redaction fixture','SSH_AUDIT','redaction-fixture',10)",[$team['id']]);
+check((new Worker($pdo,$config))->once()===3,'Vulnerability worker checks due findings');
+$vulnerabilityLogs=Database::query($pdo,'SELECT vulnerability_id,is_patched,exit_code,duration_ms,output FROM ls_vulnerability_logs ORDER BY vulnerability_id');
+check(count($vulnerabilityLogs)===3 && $vulnerabilityLogs[0]['is_patched'] && !$vulnerabilityLogs[1]['is_patched'],'Vulnerability history records patched and open outcomes');
+check((int)$vulnerabilityLogs[0]['exit_code']===0 && (int)$vulnerabilityLogs[1]['exit_code']!==0 && (float)$vulnerabilityLogs[0]['duration_ms']>=0,'Vulnerability history records exit code and duration');
+check($vulnerabilityLogs[2]['output']==='token=[REDACTED]','Vulnerability history redacts command evidence');
+check(count($board->vulnerabilityLogs($scope))===3,'Dashboard exposes scoped vulnerability history');
 
 // Actual Liman helper contracts (can, user, server, request, respond) at entry points.
 $permissions=[];

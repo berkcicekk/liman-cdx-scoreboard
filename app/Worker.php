@@ -103,39 +103,67 @@ final class Worker
             } catch (\Throwable $e) { $this->pdo->rollBack(); throw $e; }
             foreach ($rows as $row) {
                 $definition = $checks[$scope][$row['command']] ?? null;
-                $patched = is_array($definition) && ($definition['check_type'] ?? '') === $row['check_type'] && $this->executeVulnerability($definition);
-                $this->recordVulnerability($row, $patched);
+                $result = is_array($definition) && ($definition['check_type'] ?? '') === $row['check_type']
+                    ? $this->executeVulnerability($definition)
+                    : ['is_patched'=>false,'exit_code'=>127,'duration_ms'=>0.0,'output'=>'Allowlist denetimi bulunamadı veya denetim türü uyuşmuyor.'];
+                $this->recordVulnerability($row, $result);
                 $count++;
             }
         }
         return $count;
     }
 
-    private function executeVulnerability(array $definition): bool
+    private function executeVulnerability(array $definition): array
     {
         $argv = $definition['argv'] ?? null;
         $timeout = (int) ($definition['timeout_ms'] ?? 3000);
-        if (!is_array($argv) || !$argv || $timeout < 100 || $timeout > 5000 || array_filter($argv, static fn($v) => !is_string($v) || $v === '')) { return false; }
-        $process = proc_open(array_values($argv), [0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['file','/dev/null','w']], $pipes);
-        if (!is_resource($process)) { return false; }
-        $started = hrtime(true); $exit = 1;
+        if (!is_array($argv) || !$argv || $timeout < 100 || $timeout > 5000 || array_filter($argv, static fn($v) => !is_string($v) || $v === '')) {
+            return ['is_patched'=>false,'exit_code'=>126,'duration_ms'=>0.0,'output'=>'Geçersiz allowlist denetim tanımı.'];
+        }
+        $process = proc_open(array_values($argv), [0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes);
+        if (!is_resource($process)) { return ['is_patched'=>false,'exit_code'=>126,'duration_ms'=>0.0,'output'=>'Denetim süreci başlatılamadı.']; }
+        stream_set_blocking($pipes[1], false); stream_set_blocking($pipes[2], false);
+        $started = hrtime(true); $exit = 1; $timedOut = false; $output = '';
         do {
             $state = proc_get_status($process);
+            $output = $this->appendEvidence($output, stream_get_contents($pipes[1]));
+            $output = $this->appendEvidence($output, stream_get_contents($pipes[2]));
             if (!$state['running']) { $exit = (int) $state['exitcode']; break; }
-            if ((hrtime(true)-$started)/1e6 > $timeout) { proc_terminate($process, 9); break; }
+            if ((hrtime(true)-$started)/1e6 > $timeout) { $timedOut = true; proc_terminate($process, 9); break; }
             usleep(10000);
         } while (true);
+        $output = $this->appendEvidence($output, stream_get_contents($pipes[1]));
+        $output = $this->appendEvidence($output, stream_get_contents($pipes[2]));
+        fclose($pipes[1]); fclose($pipes[2]);
         $closed = proc_close($process);
-        return $exit === 0 || ($exit < 0 && $closed === 0);
+        $duration = round((hrtime(true)-$started)/1e6, 3);
+        if ($timedOut) { $exit = null; $output = $this->appendEvidence($output, 'Denetim zaman aşımına uğradı.'); }
+        elseif ($exit < 0) { $exit = $closed; }
+        return ['is_patched'=>$exit === 0,'exit_code'=>$exit,'duration_ms'=>$duration,'output'=>$this->redactEvidence($output)];
     }
 
-    private function recordVulnerability(array $check, bool $patched): void
+    private function recordVulnerability(array $check, array $result): void
     {
         $this->pdo->beginTransaction();
         try {
             $owned = Database::query($this->pdo, 'SELECT id FROM ls_vulnerabilities WHERE id=? AND lease_token=? AND lease_until>clock_timestamp() FOR UPDATE', [$check['id'],$check['lease_token']]);
-            if ($owned) { Database::query($this->pdo, "UPDATE ls_vulnerabilities SET status=?,last_checked_at=clock_timestamp(),lease_token=NULL,lease_until=NULL WHERE id=?", [$patched ? 'Patched' : 'Vulnerable',$check['id']]); }
+            if ($owned) {
+                Database::query($this->pdo, 'INSERT INTO ls_vulnerability_logs(vulnerability_id,is_patched,exit_code,duration_ms,output) VALUES (?,?,?,?,?)', [$check['id'],$result['is_patched'] ? 'true' : 'false',$result['exit_code'],round((float)$result['duration_ms'],3),$result['output']]);
+                Database::query($this->pdo, "UPDATE ls_vulnerabilities SET status=?,last_checked_at=clock_timestamp(),lease_token=NULL,lease_until=NULL WHERE id=?", [$result['is_patched'] ? 'Patched' : 'Vulnerable',$check['id']]);
+            }
             $this->pdo->commit();
         } catch (\Throwable $e) { $this->pdo->rollBack(); throw $e; }
+    }
+
+    private function appendEvidence(string $current, string $chunk): string
+    {
+        return substr($current.$chunk, 0, 4000);
+    }
+
+    private function redactEvidence(string $output): string
+    {
+        $output = preg_replace('/(?i)\\b(password|passwd|token|secret|authorization|api[_-]?key)\\b\\s*([=:])\\s*[^\\s]+/', '$1$2[REDACTED]', $output) ?? '';
+        $output = preg_replace('/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/', '', $output) ?? '';
+        return mb_substr(trim($output), 0, 1000);
     }
 }

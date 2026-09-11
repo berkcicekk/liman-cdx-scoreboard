@@ -84,7 +84,7 @@ CREATE ROLE ls_scoreboard LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD 'ra
 \i database/grants.sql
 ```
 
-`ls_scoreboard` rolü Core tablolarına erişmez. `ls_vulnerabilities` tablosunda yalnızca durum, kontrol zamanı ve worker lease sütunlarını güncelleyebilir.
+`ls_scoreboard` rolü Core tablolarına erişmez. `ls_vulnerabilities` tablosunda yalnızca durum, kontrol zamanı ve worker lease sütunlarını güncelleyebilir; `ls_vulnerability_logs` tablosuna yalnızca eklemeli denetim kanıtı yazabilir.
 
 ## Worker işletimi
 
@@ -146,6 +146,8 @@ VALUES (42, 'DirtyPipe Kernel Patch', 'SSH_AUDIT', 'dirtypipe-kernel-patch', 25)
 
 Bu SQL'deki `command` değeri, yapılandırmadaki `vulnerability_checks[SUNUCU_UUID]['dirtypipe-kernel-patch']` anahtarıyla aynı olmalıdır.
 
+Her çalıştırma `ls_vulnerability_logs` tablosuna eklemeli olarak kaydedilir. Kayıt; denetim zamanı, patched sonucu, exit code, süre ve en fazla 1000 karakterlik maskelenmiş çıktıyı içerir. `password`, `token`, `secret`, `authorization` ve API anahtarı biçimindeki değerler saklanmadan önce maskelenir. Ham denetim çıktısına parola veya erişim anahtarı yazmayın.
+
 ## Kabul kontrolleri
 
 Kurulumdan sonra aşağıdaki kontrollerin tamamı geçmelidir:
@@ -154,7 +156,7 @@ Kurulumdan sonra aşağıdaki kontrollerin tamamı geçmelidir:
 # Worker ve zafiyet sonucu
 docker compose -f docker-compose.local.yml exec liman bash /opt/lockedshields-local/worker.sh status
 docker compose -f docker-compose.local.yml exec postgres psql -U liman -d liman \
-  -c "SELECT name,status,points,last_checked_at FROM ls_vulnerabilities;"
+  -c "SELECT name,status,points,last_checked_at FROM ls_vulnerabilities; SELECT vulnerability_id,is_patched,exit_code,duration_ms,output,checked_at FROM ls_vulnerability_logs ORDER BY checked_at DESC LIMIT 20;"
 
 # Servis ölçümleri
 docker compose -f docker-compose.local.yml exec postgres psql -U liman -d liman \

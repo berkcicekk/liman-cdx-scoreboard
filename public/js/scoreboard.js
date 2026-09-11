@@ -81,13 +81,21 @@
                     badge.className = 'ls-status ' + (patched ? 'ls-vuln-patched' : 'ls-vuln-vulnerable'); badge.tabIndex = 0;
                     badge.textContent = patched ? 'Kapatıldı' : 'Açık';
                     badge.append(cell('small', vulnerability.check_type + ' · +' + fmt(vulnerability.points)));
-                    badge.title = vulnerability.command + '\nSon denetim: ' + (vulnerability.last_checked_at ? date(vulnerability.last_checked_at) : '—');
+                    badge.title = vulnerability.command + '\nSon denetim: ' + (vulnerability.last_checked_at ? date(vulnerability.last_checked_at) : '—') + '\nExit code: ' + (vulnerability.exit_code ?? '—') + '\nSüre: ' + fmt(vulnerability.duration_ms) + ' ms' + (vulnerability.last_output ? '\nÇıktı: ' + vulnerability.last_output : '');
                     td.append(badge);
                 } else td.textContent = '—';
                 row.append(td);
-            });
-            el('vulnerability-body').append(row);
         });
+        el('vulnerability-body').append(row);
+        });
+        el('vulnerability-logs').replaceChildren();
+        (data.vulnerability_logs || []).forEach(log => {
+            const row = document.createElement('tr');
+            const state = cell('td', log.is_patched ? 'Kapatıldı' : 'Açık'); state.className = log.is_patched ? 'ls-positive' : 'ls-negative';
+            row.append(cell('td',date(log.checked_at)),cell('td',log.team_name),cell('td',log.vulnerability_name),state,cell('td',log.exit_code ?? 'Zaman aşımı'),cell('td',fmt(log.duration_ms) + ' ms'),cell('td',log.output || '—'));
+            el('vulnerability-logs').append(row);
+        });
+        if (!(data.vulnerability_logs || []).length) { const row = document.createElement('tr'), td = cell('td','Henüz zafiyet denetimi kaydı yok.'); td.colSpan = 7; row.append(td); el('vulnerability-logs').append(row); }
         root.querySelectorAll('[data-role="team-select"]').forEach(select => {
             const selected = select.value;
             const signature = data.teams.map(t => t.id + ':' + t.name).join('|');

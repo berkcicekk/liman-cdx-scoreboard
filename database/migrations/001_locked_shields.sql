@@ -79,12 +79,25 @@ CREATE TABLE IF NOT EXISTS ls_vulnerabilities (
     UNIQUE (team_id, name)
 );
 
+CREATE TABLE IF NOT EXISTS ls_vulnerability_logs (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    vulnerability_id BIGINT NOT NULL REFERENCES ls_vulnerabilities(id) ON DELETE CASCADE,
+    checked_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    is_patched BOOLEAN NOT NULL,
+    exit_code INTEGER,
+    duration_ms NUMERIC(12,3) NOT NULL CHECK (duration_ms >= 0),
+    output VARCHAR(1000) NOT NULL DEFAULT '',
+    CHECK (exit_code IS NULL OR exit_code BETWEEN -255 AND 255)
+);
+
 CREATE INDEX IF NOT EXISTS ls_services_due_idx ON ls_services(next_probe_at, lease_until);
 CREATE INDEX IF NOT EXISTS ls_services_scope_idx ON ls_services(server_id, team_id);
 CREATE INDEX IF NOT EXISTS ls_logs_timeline_idx ON ls_service_logs(server_id, service_id, checked_at) INCLUDE (is_up);
 CREATE INDEX IF NOT EXISTS ls_injects_timeline_idx ON ls_injects(server_id, team_id, created_at);
 CREATE INDEX IF NOT EXISTS ls_vulnerabilities_due_idx ON ls_vulnerabilities(last_checked_at, lease_until);
+CREATE INDEX IF NOT EXISTS ls_vulnerability_logs_timeline_idx ON ls_vulnerability_logs(vulnerability_id, checked_at DESC);
 COMMENT ON TABLE ls_service_logs IS 'Append-only measurements; a sample covers at most one service interval into the future.';
 COMMENT ON TABLE ls_injects IS 'Append-only White Team audit ledger; corrections use a compensating entry.';
 COMMENT ON TABLE ls_vulnerabilities IS 'Command is a config allowlist key; the database never contains executable shell text.';
+COMMENT ON TABLE ls_vulnerability_logs IS 'Append-only vulnerability check evidence. Output is truncated and redacted before storage.';
 COMMIT;

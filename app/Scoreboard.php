@@ -17,6 +17,7 @@ final class Scoreboard
             $teams = Database::query($this->pdo, 'SELECT id,name,color,created_at FROM ls_teams WHERE server_id=? ORDER BY id', [$scope]);
             $services = $this->services($scope, $at);
             $vulnerabilities = $this->vulnerabilities($scope);
+            $vulnerabilityLogs = $this->vulnerabilityLogs($scope);
             $trend = $this->trend($scope, $at);
             $security = [];
             foreach ($vulnerabilities as $vulnerability) {
@@ -37,14 +38,24 @@ final class Scoreboard
             });
             $injects = Database::query($this->pdo, 'SELECT i.id,i.team_id,t.name AS team_name,i.kind,i.points,i.reason,i.created_by,i.created_at FROM ls_injects i JOIN ls_teams t ON t.id=i.team_id WHERE i.server_id=? ORDER BY i.created_at DESC,i.id DESC LIMIT 100', [$scope]);
             $this->pdo->commit();
-            return ['generated_at'=>$at,'teams'=>$teams,'services'=>$services,'vulnerabilities'=>$vulnerabilities,'trend'=>$trend,'injects'=>$injects];
+            return ['generated_at'=>$at,'teams'=>$teams,'services'=>$services,'vulnerabilities'=>$vulnerabilities,'vulnerability_logs'=>$vulnerabilityLogs,'trend'=>$trend,'injects'=>$injects];
         } catch (\Throwable $e) { $this->pdo->rollBack(); throw $e; }
     }
 
     public function vulnerabilities(string $scope): array
     {
-        return Database::query($this->pdo, 'SELECT v.id,v.team_id,v.name,v.check_type,v.command,v.points,v.status,v.last_checked_at
-            FROM ls_vulnerabilities v JOIN ls_teams t ON t.id=v.team_id WHERE t.server_id=? ORDER BY v.team_id,v.name', [$scope]);
+        return Database::query($this->pdo, 'SELECT v.id,v.team_id,v.name,v.check_type,v.command,v.points,v.status,v.last_checked_at,
+            latest.exit_code,latest.duration_ms,latest.output AS last_output
+            FROM ls_vulnerabilities v JOIN ls_teams t ON t.id=v.team_id
+            LEFT JOIN LATERAL (SELECT exit_code,duration_ms,output FROM ls_vulnerability_logs WHERE vulnerability_id=v.id ORDER BY checked_at DESC,id DESC LIMIT 1) latest ON true
+            WHERE t.server_id=? ORDER BY v.team_id,v.name', [$scope]);
+    }
+
+    public function vulnerabilityLogs(string $scope): array
+    {
+        return Database::query($this->pdo, 'SELECT l.id,l.vulnerability_id,v.name AS vulnerability_name,t.name AS team_name,l.checked_at,l.is_patched,l.exit_code,l.duration_ms,l.output
+            FROM ls_vulnerability_logs l JOIN ls_vulnerabilities v ON v.id=l.vulnerability_id JOIN ls_teams t ON t.id=v.team_id
+            WHERE t.server_id=? ORDER BY l.checked_at DESC,l.id DESC LIMIT 100', [$scope]);
     }
 
     public function services(string $scope, string $at): array
