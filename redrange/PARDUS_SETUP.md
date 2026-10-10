@@ -118,8 +118,11 @@ Kontrolcüde:
 ```bash
 python diagnose.py        # her katmanı ayrı ayrı test eder
 python run_gui.py         # BT-1..BT-4 kırmızı FOOTHOLD CANLI görünmeli
-python scoreboard.py      # puan tablosu + zaman çizelgesi
 ```
+
+Puanlama ayrı bir sorumluluktur: motor yalnızca `events.jsonl` üretir. Puan tahtası
+Cenk Scoreboard'dur; olayları ona köprülemek için `./setup_bridge.sh` (bkz. [BRIDGE.md](BRIDGE.md)).
+Olay akışını yerel doğrulamak için: `python tools/event_inspector.py`.
 
 ---
 

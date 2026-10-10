@@ -1,6 +1,6 @@
 # Otomatik kurulum ve smoke testi
 
-Bu belge istenen **`liman` kullanıcısı + `/liman/server/storage/extensions/lockedshields`** kurulum profilidir. Önceki README'deki kısıtlı `ls_scoreboard` rolü ve UUID kullanıcılı worker profilinin yerine bunu uygulayın; iki worker servisini birlikte başlatmayın. `deploy.sh` eski `locked-shields-worker.service` etkinse durdurur/devre dışı bırakır.
+Bu belge istenen **`liman` kullanıcısı + `/liman/server/storage/extensions/cenk`** kurulum profilidir. Önceki README'deki kısıtlı `ls_scoreboard` rolü ve UUID kullanıcılı worker profilinin yerine bunu uygulayın; iki worker servisini birlikte başlatmayın. `deploy.sh` eski `locked-shields-worker.service` etkinse durdurur/devre dışı bırakır.
 
 ## 1. Hedef Linux sunucusunu hazırla
 
@@ -62,7 +62,7 @@ Betik sırasıyla:
 3. Liman'ın yerleşik `GET /api/settings/extensions`, `POST /api/settings/extensions/upload` ve `POST /api/extensions/assign` uçlarını kullanır. Aynı sürüm kaydı/ataması varsa yeniden oluşturmaz.
 4. `database/migrations.sql` dosyasını ana PostgreSQL'de çalıştırır. PostgreSQL `liman` rolü yoksa verilen parola ile oluşturur; mevcut rolün parolasını değiştirmez.
 5. Dört tablo ve dört identity sequence için `database/grants_liman.sql` üzerinden **ALL PRIVILEGES** verir ve her yetkiyi doğrular. Başka Core tablolarına GRANT eklenmez.
-6. Dosyaları `/liman/server/storage/extensions/lockedshields` dizinine yerleştirir. İncelenen Liman sürümünün gerçek eklenti yolu `/liman/extensions/lockedshields` olduğu için buradan yeni dizine symlink kurar.
+6. Dosyaları `/liman/server/storage/extensions/cenk` dizinine yerleştirir. İncelenen Liman sürümünün gerçek eklenti yolu `/liman/extensions/cenk` olduğu için buradan yeni dizine symlink kurar.
 7. Yalnızca runtime ayarlarını `/etc/liman/locked-shields.php` dosyasına yazar. Yönetici DB parolası ve JWT bu dosyaya kopyalanmaz. Liman sandbox UUID hesabının okuma/geçiş ACL'lerini ayarlar.
 8. `/etc/systemd/system/lockedshields-probe.service` dosyasını kurar, daemon-reload ve enable/start uygular, servisin aktif kaldığını kontrol eder.
 
@@ -76,8 +76,8 @@ Kurulan servis:
 [Service]
 User=liman
 Group=liman
-WorkingDirectory=/liman/server/storage/extensions/lockedshields
-ExecStart=/usr/bin/php /liman/server/storage/extensions/lockedshields/scripts/probe_worker.php
+WorkingDirectory=/liman/server/storage/extensions/cenk
+ExecStart=/usr/bin/php /liman/server/storage/extensions/cenk/scripts/probe_worker.php
 Restart=always
 RestartSec=10
 ```
@@ -93,7 +93,7 @@ sudo journalctl -u lockedshields-probe.service -n 80 --no-pager
 Manuel tek tur (daemon çalışıyorsa 75 beklenir):
 
 ```bash
-sudo -u liman php /liman/server/storage/extensions/lockedshields/scripts/probe_worker.php --once
+sudo -u liman php /liman/server/storage/extensions/cenk/scripts/probe_worker.php --once
 ```
 
 `bin/worker.php` çekirdek döngü olarak tutulur. Operasyonel çalıştırmalarda kilitli `scripts/probe_worker.php` girişini kullanın.
@@ -101,7 +101,7 @@ sudo -u liman php /liman/server/storage/extensions/lockedshields/scripts/probe_w
 ## 5. Uçtan uca smoke testi
 
 ```bash
-sudo bash /liman/server/storage/extensions/lockedshields/scripts/smoke_test.sh \
+sudo bash /liman/server/storage/extensions/cenk/scripts/smoke_test.sh \
   /etc/liman/lockedshields-deploy.php > smoke-result.json
 echo "Smoke çıkış kodu: $?"
 ```
