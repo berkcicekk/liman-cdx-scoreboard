@@ -32,7 +32,7 @@ Toplam puan = SLA puanı + görev/ceza puanı + kapatılan zafiyet puanı
 ```
 
 - **SLA:** Servis ağırlığı, ölçülen uptime oranıyla çarpılır. Ölçüm olmayan veya worker gecikmesi nedeniyle kapsanmayan süre uptime sayılmaz.
-- **Görev/ceza:** White Team, idempotent `request_id` ile pozitif görev veya negatif ceza kaydı ekler.
+- **Görev/ceza:** White Team, idempotent `request_id` ile pozitif görev veya negatif ceza kaydı ekler. Red Range savunma poligonu bu eksene otomatik beslenebilir (bkz. Red Range `BRIDGE.md`): poligonun olay akışı `event_id`→`request_id` eşlemesiyle `ls_injects` defterine çevrilir.
 - **Güvenlik:** Durumu `Patched` olan zafiyetlerin puanı eklenir. Trend grafiği bu değişimi yalnızca denetimin gerçekleştiği andan sonraki zaman noktalarına yansıtır.
 
 Servis sonucu, bir sonraki sonuca veya en fazla kendi kontrol aralığının sonuna kadar geçerlidir. Grafik son 60 dakika için 61 kümülatif zaman noktası üretir; gelecekteki ölçümler veya puan kayıtları geçmişi değiştirmez.
