@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import socket
 import time
 
@@ -27,11 +28,14 @@ HEARTBEAT_SECONDS = 5
 RECONNECT_SECONDS = 5
 
 
-def run(server: str, port: int, machine_id: str) -> None:
+def run(server: str, port: int, machine_id: str, token: str = "") -> None:
+    hello = {"machine_id": machine_id}
+    if token:
+        hello["token"] = token   # kontrolcu bunu config'teki token ile dogrular
     while True:
         try:
             with socket.create_connection((server, port), timeout=10) as s:
-                s.sendall((json.dumps({"machine_id": machine_id}) + "\n").encode())
+                s.sendall((json.dumps(hello) + "\n").encode())
                 print(f"[beacon] baglandi -> {server}:{port} ({machine_id})", flush=True)
                 while True:
                     time.sleep(HEARTBEAT_SECONDS)
@@ -47,8 +51,10 @@ def main() -> None:
     p.add_argument("--server", required=True, help="Kontrolcu IP")
     p.add_argument("--port", type=int, default=9000)
     p.add_argument("--id", dest="machine_id", required=True, help="machine_id")
+    p.add_argument("--token", default=os.environ.get("BEACON_TOKEN", ""),
+                   help="kontrolcu config'indeki beacon_token (env: BEACON_TOKEN)")
     a = p.parse_args()
-    run(a.server, a.port, a.machine_id)
+    run(a.server, a.port, a.machine_id, a.token)
 
 
 if __name__ == "__main__":

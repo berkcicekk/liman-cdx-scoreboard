@@ -54,7 +54,11 @@ if [[ "${{1:-}}" == "--uninstall" ]]; then
 fi
 
 CONTROLLER_IP="${{1:-}}"
-[[ -n "$CONTROLLER_IP" ]] || die "Kontrolcu IP'si gerekli:  sudo $0 192.168.1.10"
+[[ -n "$CONTROLLER_IP" ]] || die "Kontrolcu IP'si gerekli:  sudo $0 192.168.1.10 [BEACON_TOKEN]"
+# Opsiyonel beacon token: bos ise kimlik dogrulamasi KAPALI (eski davranis).
+# Doluysa kontrolcu config'indeki beacon_token ile BIREBIR eslesmeli; aksi halde
+# beacon reddedilir. Bir takimin baska bir takimi taklit etmesini engeller.
+BEACON_TOKEN="${{2:-${{BEACON_TOKEN:-}}}}"
 
 echo
 echo "${{BLU}}=====================================================${{OFF}}"
@@ -121,7 +125,7 @@ Description=Range Beacon Agent
 After=network.target
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 $RANGE_DIR/beacon.py --server $CONTROLLER_IP --port $BEACON_PORT --id $MACHINE_ID
+ExecStart=/usr/bin/python3 $RANGE_DIR/beacon.py --server $CONTROLLER_IP --port $BEACON_PORT --id $MACHINE_ID --token "$BEACON_TOKEN"
 Restart=always
 RestartSec=10
 [Install]

@@ -49,10 +49,17 @@ def load_config(path: str = "config.json") -> dict:
 def build_context(path: str = "config.json") -> AppContext:
     cfg = load_config(path)
 
+    # Hedefteki beacon token'lari: machine_id -> token. Doluysa dinleyici
+    # kimlik dogrulamasi yapar ve taklidi engeller. Tanimli degilse (demo)
+    # dogrulama kapalidir.
+    tokens = {t["machine_id"]: str(t["beacon_token"])
+              for t in cfg["targets"] if t.get("beacon_token")}
+
     sessions = SessionManager(
         host=cfg["listen_host"],
         port=int(cfg["listen_port"]),
         timeout=float(cfg["session_timeout"]),
+        tokens=tokens or None,
     )
     sink = EventSink(cfg["events_path"])
 

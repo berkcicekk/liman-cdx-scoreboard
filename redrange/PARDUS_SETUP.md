@@ -24,8 +24,16 @@ Her Pardus makinesinde — **argüman: Kali'nin IP'si**:
 
 ```bash
 chmod +x /tmp/setup_BT-1.sh
-sudo /tmp/setup_BT-1.sh 192.168.1.10      # <-- kendi Kali IP'ni yaz
+sudo /tmp/setup_BT-1.sh 192.168.1.10                 # <-- kendi Kali IP'ni yaz
+# veya kimlik dogrulamali (ortak/izole yarismada ONERILEN):
+sudo /tmp/setup_BT-1.sh 192.168.1.10 <UZUN_RASTGELE_TOKEN>
 ```
+
+> **Beacon token (taklidi engeller):** Kontrolcünün 9000 portuna ulaşan herhangi
+> biri, token olmadan başka bir takımın `machine_id`'sini taklit edip onun beacon'ını
+> "canlı" tutarak puanını bozabilir. Her makineye farklı, uzun, rastgele bir token
+> verin ve **aynı** değeri `config.json`'daki o makinenin `beacon_token` alanına yazın.
+> Token boş bırakılırsa doğrulama kapalıdır (yalnızca tek kişilik/yerel denemede uygun).
 
 Script şunları yapar:
 

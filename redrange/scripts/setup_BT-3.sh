@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # =====================================================================
-#  RED RANGE â€” BT-3 hedef makinesi kurulumu (Pardus / Debian tabanli)
+#  RED RANGE — BT-3 hedef makinesi kurulumu (Pardus / Debian tabanli)
 #
 #  KULLANIM:   sudo ./setup_BT-3.sh <KONTROLCU_IP>
 #  ORNEK:      sudo ./setup_BT-3.sh 192.168.1.10
 #
 #  Bu script makineyi KASTEN ZAYIFLATIR. Sadece izole bir egitim aginda
-#  calistir. Once snapshot al â€” geri donus yolu budur.
+#  calistir. Once snapshot al — geri donus yolu budur.
 #
 #  Kaldirmak icin:  sudo ./setup_BT-3.sh --uninstall
 # =====================================================================
@@ -40,7 +40,11 @@ if [[ "${1:-}" == "--uninstall" ]]; then
 fi
 
 CONTROLLER_IP="${1:-}"
-[[ -n "$CONTROLLER_IP" ]] || die "Kontrolcu IP'si gerekli:  sudo $0 192.168.1.10"
+[[ -n "$CONTROLLER_IP" ]] || die "Kontrolcu IP'si gerekli:  sudo $0 192.168.1.10 [BEACON_TOKEN]"
+# Opsiyonel beacon token: bos ise kimlik dogrulamasi KAPALI (eski davranis).
+# Doluysa kontrolcu config'indeki beacon_token ile BIREBIR eslesmeli; aksi halde
+# beacon reddedilir. Bir takimin baska bir takimi taklit etmesini engeller.
+BEACON_TOKEN="${2:-${BEACON_TOKEN:-}}"
 
 echo
 echo "${BLU}=====================================================${OFF}"
@@ -80,6 +84,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import socket
 import time
 
@@ -87,11 +92,14 @@ HEARTBEAT_SECONDS = 5
 RECONNECT_SECONDS = 5
 
 
-def run(server: str, port: int, machine_id: str) -> None:
+def run(server: str, port: int, machine_id: str, token: str = "") -> None:
+    hello = {"machine_id": machine_id}
+    if token:
+        hello["token"] = token   # kontrolcu bunu config'teki token ile dogrular
     while True:
         try:
             with socket.create_connection((server, port), timeout=10) as s:
-                s.sendall((json.dumps({"machine_id": machine_id}) + "\n").encode())
+                s.sendall((json.dumps(hello) + "\n").encode())
                 print(f"[beacon] baglandi -> {server}:{port} ({machine_id})", flush=True)
                 while True:
                     time.sleep(HEARTBEAT_SECONDS)
@@ -107,8 +115,10 @@ def main() -> None:
     p.add_argument("--server", required=True, help="Kontrolcu IP")
     p.add_argument("--port", type=int, default=9000)
     p.add_argument("--id", dest="machine_id", required=True, help="machine_id")
+    p.add_argument("--token", default=os.environ.get("BEACON_TOKEN", ""),
+                   help="kontrolcu config'indeki beacon_token (env: BEACON_TOKEN)")
     a = p.parse_args()
-    run(a.server, a.port, a.machine_id)
+    run(a.server, a.port, a.machine_id, a.token)
 
 
 if __name__ == "__main__":
@@ -270,7 +280,7 @@ Description=Range Beacon Agent
 After=network.target
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 $RANGE_DIR/beacon.py --server $CONTROLLER_IP --port $BEACON_PORT --id $MACHINE_ID
+ExecStart=/usr/bin/python3 $RANGE_DIR/beacon.py --server $CONTROLLER_IP --port $BEACON_PORT --id $MACHINE_ID --token "$BEACON_TOKEN"
 Restart=always
 RestartSec=10
 [Install]
@@ -279,7 +289,7 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now range-weak range-decoy range-beacon
-good "3 servis aktif (Restart=always â€” sadece process oldurmek yetmez)"
+good "3 servis aktif (Restart=always — sadece process oldurmek yetmez)"
 
 # ------------------------------------------------- 3) ek yanlis configler
 say "Sertlestirme gorevleri (yanlis configler) uygulaniyor"

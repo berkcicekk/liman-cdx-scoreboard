@@ -18,6 +18,7 @@ beklenmeyen her baglanti goze carpar.
 """
 from __future__ import annotations
 
+import hmac
 import json
 import socket
 import threading
@@ -46,11 +47,17 @@ class Session:
 
 class SessionManager:
     def __init__(self, host: str = "0.0.0.0", port: int = 9000,
-                 timeout: float = 20.0, verbose: bool = True) -> None:
+                 timeout: float = 20.0, verbose: bool = True,
+                 tokens: dict[str, str] | None = None) -> None:
         self.host = host
         self.port = port
         self.timeout = timeout
         self.verbose = verbose
+        # machine_id -> gizli token. Bos/None ise kimlik dogrulamasi KAPALI
+        # (yerel demo/selftest icin). Doluysa beacon, claim ettigi machine_id
+        # icin eslesen token'i gondermek ZORUNDA; aksi halde baglanti reddedilir.
+        # Boylece bir katilimci baska bir takimin machine_id'sini taklit edemez.
+        self.tokens = {str(k): str(v) for k, v in (tokens or {}).items()}
         self._sessions: dict[str, Session] = {}
         self._lock = threading.Lock()
         self._srv: socket.socket | None = None
@@ -131,6 +138,15 @@ class SessionManager:
 
                     if key is None:
                         mid = str(msg.get("machine_id", "")) if parsed else ""
+                        if self.tokens:
+                            # Kimlik dogrulamasi zorunlu: taklidi engelle.
+                            tok = str(msg.get("token", "")) if parsed else ""
+                            expected = self.tokens.get(mid)
+                            if not mid or expected is None or not hmac.compare_digest(tok, expected):
+                                self._log(
+                                    f"RED       token/kimlik gecersiz <- {peer_ip}:{peer_port}"
+                                    f"  (machine_id={mid!r})")
+                                return  # kaydetme, baglantiyi kapat
                         identified = bool(mid)
                         key = mid or f"unknown@{peer_ip}:{peer_port}"
                         with self._lock:
