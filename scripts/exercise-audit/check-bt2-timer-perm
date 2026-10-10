@@ -1,0 +1,6 @@
+#!/bin/sh
+# BT-2: systemd timer betigi. Patched = dunyaya yazilabilir degil.
+SCRIPT="${TIMER_SCRIPT:-/usr/local/bin/range-maintenance.sh}"
+[ -e "$SCRIPT" ] || exit 0
+find "$SCRIPT" -perm /0002 2>/dev/null | grep -q . && exit 1
+exit 0

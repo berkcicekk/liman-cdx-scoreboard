@@ -1,0 +1,7 @@
+#!/bin/sh
+# BT-1: python3 cap_setuid. Patched (exit 0) = yetenek kaldirilmis.
+PY="${TARGET_PYTHON:-/usr/bin/python3}"
+case "$(getcap "$PY" 2>/dev/null)" in
+  *cap_setuid*) exit 1 ;;   # hala acik
+  *) exit 0 ;;
+esac

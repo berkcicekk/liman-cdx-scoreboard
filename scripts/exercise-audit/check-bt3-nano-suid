@@ -1,0 +1,6 @@
+#!/bin/sh
+# BT-3: nano SUID. Patched = SUID biti yok.
+NANO="$(command -v nano 2>/dev/null || echo /bin/nano)"
+[ -e "$NANO" ] || exit 0
+[ -u "$NANO" ] && exit 1
+exit 0

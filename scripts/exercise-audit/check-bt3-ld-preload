@@ -1,0 +1,4 @@
+#!/bin/sh
+# BT-3: sudoers env_keep LD_PRELOAD. Patched = koruma yok.
+grep -rqiE "env_keep.*LD_PRELOAD" /etc/sudoers /etc/sudoers.d 2>/dev/null && exit 1
+exit 0

@@ -1,0 +1,6 @@
+#!/bin/sh
+# BT-1: cron Ansible task dosyasi. Patched = dusuk-yetkili kullaniciya yazilamaz.
+TASK="${ANSIBLE_TASK:-/opt/automation/tasks/main.yml}"
+[ -e "$TASK" ] || exit 0
+find "$TASK" -perm /0022 2>/dev/null | grep -q . && exit 1   # grup/dunya yazilabilir
+exit 0

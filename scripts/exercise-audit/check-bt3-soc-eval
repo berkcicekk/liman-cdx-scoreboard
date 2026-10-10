@@ -1,0 +1,6 @@
+#!/bin/sh
+# BT-3: SOC log analiz betigi. Patched = eval ile islenmiyor.
+SOC="${SOC_SCRIPT:-/usr/local/bin/soc-authlog.sh}"
+[ -e "$SOC" ] || exit 0
+grep -qE "(^|[^a-zA-Z_])eval([^a-zA-Z_]|$)" "$SOC" 2>/dev/null && exit 1
+exit 0
