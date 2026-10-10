@@ -1,0 +1,5 @@
+flet>=1.0.0
+
+# Cenk koprusu (bridge_cenk.py) icin. Yalnizca kopruyu calistiracaksaniz gerekir;
+# motor, GUI ve testler bu paket olmadan calisir.
+psycopg[binary]>=3.1

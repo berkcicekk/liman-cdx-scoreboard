@@ -1,0 +1,27 @@
+{
+  "_NOT": "demo.py akisi icin esleme. team_id'leri kendi test Cenk veritabanindaki gercek ls_teams.id ile degistirin.",
+
+  "server_id": "00000000-0000-0000-0000-0000000000de",
+  "actor_uuid": "00000000-0000-0000-0000-0000000b1d6e",
+
+  "teams": {
+    "BT-1": 1,
+    "BT-2": 2,
+    "BT-3": 3,
+    "BT-4": 4
+  },
+
+  "points": {
+    "foothold_down": 5,
+    "remediated": 25,
+    "regression": 25
+  },
+
+  "database": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "dbname": "liman",
+    "user": "ls_scoreboard",
+    "password_env": "BRIDGE_DB_PASSWORD"
+  }
+}

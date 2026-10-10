@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Red Range calisma zamani ciktilari (olay akislari, offset, demo durumu)
+events*.jsonl
+selftest_events.jsonl
+*.bridge_offset
+.bridge_offset
+config_demo.json
+.demo_pids.json
+
+# Yerel sirlar / doldurulmus yapilandirma — SABLONLAR izlenir, gercek degerler izlenmez
+.env
+.env.local
+bridge_map.local.json

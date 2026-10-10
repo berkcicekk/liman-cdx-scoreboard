@@ -1,0 +1,27 @@
+{
+  "_NOT": "Red Range kimliklerini Cenk kimliklerine baglar. Takimlar once Cenk'te ls_teams'de olusturulmali; id'leri buraya yazin. DB parolasini bu dosyaya KOYMAYIN; password_env kullanin.",
+
+  "server_id": "SET_ME-liman-sunucu-uuid",
+  "actor_uuid": "SET_ME-kopruye-ayrilmis-sabit-uuid",
+
+  "teams": {
+    "BT-1": 0,
+    "BT-2": 0,
+    "BT-3": 0,
+    "BT-4": 0
+  },
+
+  "points": {
+    "foothold_down": 5,
+    "remediated": 25,
+    "regression": 25
+  },
+
+  "database": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "dbname": "liman",
+    "user": "ls_scoreboard",
+    "password_env": "BRIDGE_DB_PASSWORD"
+  }
+}

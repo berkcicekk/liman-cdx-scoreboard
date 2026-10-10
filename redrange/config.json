@@ -1,0 +1,16 @@
+{
+  "listen_host": "0.0.0.0",
+  "listen_port": 9000,
+  "tick_seconds": 3,
+  "session_timeout": 20,
+  "events_path": "events.jsonl",
+
+  "_NOT": "host alanlarini GERCEK Pardus IP'leri ile degistir! Aksi halde her sey BEKLIYOR kalir.",
+
+  "targets": [
+    { "machine_id": "BT-1", "user_id": "ogrenci-1", "host": "SET_ME", "vuln_port": 8081, "decoy_port": 4444 },
+    { "machine_id": "BT-2", "user_id": "ogrenci-2", "host": "SET_ME", "vuln_port": 8081, "decoy_port": 4555 },
+    { "machine_id": "BT-3", "user_id": "ogrenci-3", "host": "SET_ME", "vuln_port": 8081, "decoy_port": 5666 },
+    { "machine_id": "BT-4", "user_id": "ogrenci-4", "host": "SET_ME", "vuln_port": 8081, "decoy_port": 7777 }
+  ]
+}
