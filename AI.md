@@ -80,19 +80,44 @@ eklentinin **inject eksenine** çevirir: olay `event_id`'si (uuid4 hex) kanonik 
 dönüştürülüp `ls_injects.request_id` olarak idempotent yazılır. SLA ve security eksenleri
 köprüden bağımsızdır. Ayrıntı Red Range deposundaki `BRIDGE.md` dosyasındadır.
 
-## Bilinen doküman tutarsızlıkları (dikkat)
+### Ölçüm sorumluluğu ayrımı (önemli)
 
-Depoda iki kurulum profili ve iki isimlendirme birlikte geçiyor; bir değişiklik yaparken
-hangisine dokunduğunu netleştir:
+Tatbikat makinelerindeki zafiyetler iki gruba ayrılır; her grubu **farklı** sistem ölçer:
 
-- Paket/dizin adı: bir yerde **Cenk** (`Cenk-1.0.0.zip`, `extensions/cenk`), başka yerde
-  **LockedShields** (`LockedShields-1.0.0.zip`, `extensions/lockedshields`). Manifest
-  (`db.json`) adı `Cenk`. Kod ad alanı `LockedShields\` (örn. `app/Scoreboard.php`).
-- Migration yolu: README `database/migrations/001_locked_shields.sql`, teknik rehber
-  `database/migrations.sql`.
-- Worker profili: README kısıtlı `ls_scoreboard` rolü; `DEPLOYMENT.md` `liman` kullanıcılı
-  profil (iki worker servisi birlikte başlatılmaz).
-- İki systemd unit: `deploy/locked-shields-worker.service` ve `deploy/lockedshields-probe.service`.
+- **Ağ-yüzeyli foothold** (açık port, dışa bağlantı; örn. anonim FTP, Tomcat paneli) →
+  **Red Range** `port`/`beacon` vektörü. Red Range hedefe **komut çalıştırmaz, payload
+  göndermez** — bu, motorun değişmezidir ve **bozulmamalıdır**.
+- **Yerel yetki yükseltme** (capability, sudo/sudoers, systemd timer, LD_PRELOAD, SUID,
+  IaC/otomasyon zehirlenmesi; ağdan görünmez) → **Cenk'in `SSH_AUDIT`/`REMOTE_EXPLOIT`
+  zafiyet kontrolü.** Allowlist'ten `argv` çalıştırılır (shell yok), `exit 0 = Patched`.
+
+> **Yapma:** Red Range'e audit/komut-çalıştırma eklemeyin — bu iş Cenk'in zafiyet
+> worker'ının. Örnek allowlist: `config/locked-shields.exercise.example.php`.
+
+## İsimlendirme (kanonik karar)
+
+**Ürün adı: Cenk.** Kaynak: manifest (`db.json` → `Cenk`), `scripts/build.ps1` çıktısı
+`Cenk-$version.zip`, README başlığı ve son commit'ler. Kullanıcıya dönük her yerde paket
+adı **`Cenk-1.0.0.zip`**'tir (`DEPLOYMENT.md` bu sürümde hizalandı).
+
+**İç implementasyon adları `LockedShields`/`lockedshields`/`ls_` olarak KALIR** — bunlar
+şemaya ve kurulum yoluna gömülü olduğu için rename edilmez:
+- PHP ad alanı `LockedShields\` (örn. `app/Scoreboard.php`),
+- tablo öneki `ls_*`, yapılandırma dosyası `locked-shields.php`,
+- kurulum yolu `/liman/.../extensions/lockedshields` (incelenen Liman sürümünün gerçek
+  eklenti yoluyla uyumlu).
+
+Yani **ürün = Cenk, implementasyon kimlikleri = LockedShields**; bu ikisi bilinçli olarak
+ayrı. Tam bir iç rename ayrı ve şema-kırıcı bir refactor'dur; istenmeden yapılmaz.
+
+## Dikkat edilecek diğer noktalar
+
+- **Migration:** `database/migrations.sql` ile `database/migrations/001_locked_shields.sql`
+  **birebir aynı** (içerik mirror). Biri silinirse ikisine de bakan dokümanları/scriptleri güncelle.
+- **İki kurulum profili:** README kısıtlı `ls_scoreboard` rolü; `DEPLOYMENT.md` `liman`
+  kullanıcılı profil. İkisi birlikte çalıştırılmaz — `deploy.sh` eski worker unit'ini durdurur.
+- **İki systemd unit:** `deploy/locked-shields-worker.service` (eski) ve
+  `deploy/lockedshields-probe.service` (yeni profil). Aynı anda ikisi etkin olmamalı.
 
 ## Destek
 

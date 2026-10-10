@@ -17,11 +17,11 @@ PHP CLI'da `pcntl`, `posix`, `proc_open` kullanılabilir olmalı. Paket yükleme
 
 ## 2. Paketi ve yapılandırmayı yerleştir
 
-Güncellenmiş `LockedShields-1.0.0.zip` dosyasını hedef sunucuya kopyaladıktan sonra:
+Güncellenmiş `Cenk-1.0.0.zip` dosyasını (bkz. `scripts/build.ps1` çıktısı) hedef sunucuya kopyaladıktan sonra:
 
 ```bash
 mkdir -p "$HOME/lockedshields-installer"
-unzip LockedShields-1.0.0.zip -d "$HOME/lockedshields-installer"
+unzip Cenk-1.0.0.zip -d "$HOME/lockedshields-installer"
 cd "$HOME/lockedshields-installer"
 sudo install -d -m 0750 /etc/liman
 sudo install -m 0600 -o root -g root config/deploy.example.php /etc/liman/lockedshields-deploy.php
@@ -52,7 +52,7 @@ JWT dosyası yalnızca token metnini içermeli. Gizli bilgileri komut satırına
 ## 3. Kurulumu çalıştır
 
 ```bash
-sudo bash deploy.sh /tam/yol/LockedShields-1.0.0.zip /etc/liman/lockedshields-deploy.php
+sudo bash deploy.sh /tam/yol/Cenk-1.0.0.zip /etc/liman/lockedshields-deploy.php
 ```
 
 Betik sırasıyla:
